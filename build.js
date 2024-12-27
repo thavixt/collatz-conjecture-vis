@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 // Replace these with the string you want to find and the string you want to replace it with
-const targetString = '="/assets/index';
-const replacementString = '="./assets/index';
+const targetString = '="/';
+const replacementString = '="./';
 
 // Function to replace strings in a file
 function replaceInFile(filePath) {

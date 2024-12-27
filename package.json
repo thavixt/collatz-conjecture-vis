@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node build.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "publish-gh-pages": "yarn build && node build.js && gh-pages -d dist"

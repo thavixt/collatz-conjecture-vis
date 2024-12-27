@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "publish-gh-pages": "gh-pages -d dist"
+    "publish-gh-pages": "yarn build && node build.js && gh-pages -d dist"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",

@@ -32,7 +32,7 @@ export default function App() {
           </div>
           <div className="bg-slate-800 rounded-lg p-4">
             <blockquote cite="https://en.wikipedia.org/wiki/Collatz_conjecture">
-              <p>This process will eventually reach the number 1, regardless of which positive integer is chosen initially. That is, for each <code>n</code>, there is some <code>i</code> with <code>a<sub>i</sub> = 1</code>.</p>
+              <p>This process will eventually reach the number 1, regardless of which positive integer is chosen initially. That is, for each <code>n</code>, there is some <code>i</code> with <code>n<sub>i</sub> = 1</code>.</p>
             </blockquote>
             <p>— Lothar Collatz  <cite><a target="_blank" href="https://en.wikipedia.org/wiki/Lothar_Collatz">Wikipedia</a></cite></p>
           </div>

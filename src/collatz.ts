@@ -36,6 +36,20 @@ export function getNext(n: number): number {
   return result;
 }
 
+/**
+ * The smallest i such that aˇi < aˇ0 is called the stopping time of n
+ */
+export function getStoppingTimeOfSeries(series: number[]): number {
+  return series.findIndex(n => n < series[0]) as number; // hack, should always exist? dunno
+}
+
+/**
+ * Similarly, the smallest k such that aˇk = 1 is called the total stopping time of n.
+ */
+export function getTotalStoppingTimeOfSeries(series: number[]): number {
+  return series.findIndex(n => n === 1) as number; // hack, always exists
+}
+
 // https://en.wikipedia.org/wiki/Collatz_conjecture
 // Getting the previous value is not trivial...
 // export function getPrevious(n: number): number {

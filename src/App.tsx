@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   Bar,
   BarChart,
-  Label,
   Line,
   LineChart,
   ReferenceLine,
@@ -10,58 +9,85 @@ import {
   Scatter,
   ScatterChart,
   Tooltip,
-  TooltipProps,
   XAxis,
   YAxis,
 } from 'recharts';
-import { getCollatzSeries, getNext } from './collatz';
+import { getCollatzSeries, getStoppingTimeOfSeries, getTotalStoppingTimeOfSeries } from './collatz';
 import './App.css'
-import { ANIMATION_DURATION_MS, DEFAULT_COUNT_MAP, DEFAULT_SEED, TIMER_DURATION_MS } from './utils';
-
+import { ANIMATION_DURATION_MS, DEFAULT_COUNT_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, TIMER_DURATION_MS } from './utils';
+import { CustomTooltip, CustomScatterTooltip, CustomTotalScatterTooltip } from './Tooltips';
 
 export default function App() {
   const [seedNumber, setSeedNumber] = useState(DEFAULT_SEED);
+  const [animate, setAnimate] = useState(getStoredAnimationActive());
   const [encounteredSeedNumbers, setEncounteredSeedNumbers] = useState(new Set<number>());
 
   const [series, setSeries] = useState([{ name: 0, value: 0 }]);
+  const [peak, setPeak] = useState(0);
+  const [average, setAverage] = useState(0);
   const [logSeries, setLogSeries] = useState([{ name: 0, value: 0 }]);
   const [logAverage, setLogAverage] = useState(0);
 
-  const [lengthBySeed, setLengthBySeed] = useState<{ seed: number, length: number }[]>([]);
+  const [stoppingTimes, setStoppingTimes] = useState<{ seed: number, stoppingTime: number }[]>([]);
+  const [totalStoppingTimes, setTotalStoppingTimes] = useState<{ seed: number, totalStoppingTime: number }[]>([]);
   const [countByLeadingDigit, setCountByLeadingDigit] = useState(DEFAULT_COUNT_MAP);
 
+  const [incrementBy, setIncrementBy] = useState(DEFAULT_INCREMENT_VALUE);
   const [timer, setTimer] = useState(0);
 
   const automate = useCallback(() => {
     setTimer(setInterval(() => {
-      setSeedNumber(n => n + 1);
+      setSeedNumber(n => n + incrementBy);
     }, TIMER_DURATION_MS));
-  }, []);
+  }, [incrementBy]);
   const stopAutomation = useCallback(() => {
     clearInterval(timer);
     setTimer(0);
   }, [timer]);
 
+  const resetCurrent = useCallback(() => {
+    setSeedNumber(1);
+    setIncrementBy(1);
+    setStoredSeed(1);
+    setStoredIncrementBy(1);
+  }, []);
+
+  const reset = useCallback(() => {
+    setEncounteredSeedNumbers(new Set());
+    setStoppingTimes([]);
+    setTotalStoppingTimes([]);
+    setCountByLeadingDigit(DEFAULT_COUNT_MAP);
+    resetCurrent();
+  }, [resetCurrent]);
+
   useEffect(() => {
     if (!seedNumber) {
-      setSeries([]);
-      setLogSeries([]);
-      setLogAverage(0);
-      setLengthBySeed([]);
+      resetCurrent();
       return;
     }
 
+    setStoredSeed(seedNumber);
+
     const collatzSeries = getCollatzSeries(seedNumber);
     setSeries(collatzSeries.map((value, index) => ({ name: index, value })));
-
+    setPeak(Math.max(...collatzSeries));
+    setAverage(+(collatzSeries.reduce((prev, cur) => prev + cur, 0) / collatzSeries.length).toPrecision(4));
     setLogSeries(collatzSeries.map((value, index) => ({ name: index, value: Math.log(value) })));
-    const average = logSeries.reduce((prev, cur) => prev + cur.value, 0) / logSeries.length;
-    setLogAverage(average);
+    setLogAverage(logSeries.reduce((prev, cur) => prev + cur.value, 0) / logSeries.length);
 
-    if (lengthBySeed.findIndex(v => v.length === series.length) === -1) {
-      setLengthBySeed(prev => [
+    if (stoppingTimes.findIndex(v => v.seed === seedNumber) === -1) {
+      setStoppingTimes(prev => [
         ...prev,
-        { seed: seedNumber, length: series.length }
+        // ...prev.slice(-100),
+        { seed: seedNumber, stoppingTime: getStoppingTimeOfSeries(collatzSeries) }
+      ]);
+    }
+    
+    if (totalStoppingTimes.findIndex(v => v.seed === seedNumber) === -1) {
+      setTotalStoppingTimes(prev => [
+        ...prev,
+        // ...prev.slice(-100),
+        { seed: seedNumber, totalStoppingTime: getTotalStoppingTimeOfSeries(collatzSeries) }
       ]);
     }
 
@@ -118,94 +144,147 @@ export default function App() {
             <div className='flex flex-col space-y-2 items-center'>
               <p>To create some infographics of the Collatz series, select a seed number:</p>
               <div className="flex items-center space-x-2">
+                <label htmlFor="seed">Seed:</label>
                 <input
                   className="w-32 p-2 rounded-lg text-center"
-                  min={1}
+                  min={0}
                   max={999999999}
                   onChange={(e) => {
                     if (e.target.value) {
-                      setSeedNumber(parseInt(e.target.value))
+                      const n = Math.min(parseInt(e.target.value), MAX_SEED);
+                      setSeedNumber(n);
+                      setStoredSeed(n);
                     }
                   }}
+                  id='seed'
                   type="number"
                   value={seedNumber}
                   disabled={!!timer}
                 />
-                <span className='text-gray-500'>tested {encounteredSeedNumbers.size} number(s)</span>
+                <button className='bg-gray-700' type="button" onClick={reset} disabled={!!timer}>Reset</button>
+                <div className='flex justify-center space-x-2'>
+                  <label htmlFor="animate">Animate:</label>
+                  <input className='p-2' type="checkbox" id="animate" onChange={e => setAnimate(e.target.checked)} />
+                </div>
+                <span className='text-gray-500'>Tested {encounteredSeedNumbers.size} number(s)</span>
               </div>
               <div className='flex space-x-4 items-center justify-center'>
-                <button className='bg-indigo-700' type="button" onClick={automate} disabled={!!timer}>Auto increment</button>
+                <button className='bg-green-700' type="button" onClick={automate} disabled={!!timer}>Auto inc.</button>
                 <button className='bg-red-700' type="button" onClick={stopAutomation} disabled={!timer}>Stop</button>
+                <label htmlFor="incrementBy">Increment by:</label>
+                <input
+                  id='incrementBy'
+                  className="w-24 p-2 rounded-lg text-center"
+                  min={1}
+                  max={10000}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const n = Math.min(parseInt(e.target.value), MAX_INCREMENT_VALUE);
+                      setIncrementBy(n);
+                      setStoredIncrementBy(n);
+                    }
+                  }}
+                  type="number"
+                  value={incrementBy}
+                  disabled={!!timer}
+                />
               </div>
             </div>
           </div>
         </div>
 
-        <div className='width-container w-full h-[500px] grid grid-cols-2 grid-rows-2'>
-          <div className='size-full'>
+        <div className='width-container w-full h-[500px] grid grid-cols-2 grid-rows-3 gap-4'>
+          <div className='size-full flex flex-col space-y-2'>
+            <p className='text-gray-400'>Collatz series of {seedNumber}</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 width={600}
                 height={300}
                 data={series}
               >
-                <XAxis dataKey="name" minTickGap={25}>
-                  <Label value={`Collatz series of ${seedNumber}`} offset={200} position="top" />
-                </XAxis>
+                <XAxis dataKey="name" minTickGap={25} />
                 <YAxis minTickGap={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line dataKey="value" type="monotone" stroke="#aa4455" animationDuration={ANIMATION_DURATION_MS} dot={false} />
+                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          <div className='size-full'>
+          <div className='flex justify-center'>
+            <div className='size-full grid grid-cols-2 grid-rows-5 w-80 border border-gray-600 rounded-md p-2 shadow-lg shadow-gray-800'>
+              <div>Seed number:</div>
+              <div><code>{seedNumber}</code></div>
+              <div>Peak (max) value:</div>
+              <div><code>{peak}</code></div>
+              <div>Average value:</div>
+              <div><code>{average}</code></div>
+              <div title='The smallest i such that aˇi < aˇ0 is called the stopping time of n'>Stopping time:</div>
+              <div><code>{stoppingTimes.length ? stoppingTimes[stoppingTimes.length - 1].stoppingTime : '-'}</code></div>
+              <div title='The smallest k such that aˇk = 1 is called the total stopping time of n'>Total stopping time:</div>
+              <div><code>{totalStoppingTimes.length ? totalStoppingTimes[totalStoppingTimes.length - 1].totalStoppingTime : '-'}</code></div>
+            </div>
+          </div>
+
+          <div className='size-full flex flex-col space-y-2'>
+            <p className='text-gray-400'>Logarithm of the series (log(n))</p>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 width={600}
                 height={300}
                 data={logSeries}
               >
-                <XAxis dataKey="name" minTickGap={25}>
-                  <Label value="Logarithm of the series" offset={200} position="top" />
-                </XAxis>
+                <XAxis dataKey="name" minTickGap={25} />
                 <YAxis minTickGap={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line dataKey="value" type="monotone" stroke="#aa4455" animationDuration={ANIMATION_DURATION_MS} dot={false} />
+                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
                 <ReferenceLine
-                  label="Descent"
                   stroke="blue"
                   strokeDasharray="3 3"
                   segment={[{ x: 0, y: logSeries[0].value }, { x: logSeries.length - 1, y: logSeries[logSeries.length - 1].value }]}
                 />
-                <ReferenceLine y={logAverage} label="Average" stroke="green" strokeDasharray="3 3" />
+                <ReferenceLine y={logAverage} label="Average" stroke="orange" strokeDasharray="3 3" />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className='size-full'>
+
+          <div className='size-full flex flex-col space-y-2'>
+            <p className='text-gray-400'>Stopping time by seed number (n<sub>i</sub>=n<sub>0</sub>, n reaches the seed number)</p>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart
                 width={600}
                 height={300}
-                data={logSeries}
               >
-                <XAxis dataKey="seed" type="number" name="stature">
-                  <Label value="Series length first reached by seed number" offset={200} position="top" />
-                </XAxis>
-                <YAxis dataKey="length" type="number" name="weight" />
-                <Scatter data={lengthBySeed} fill="#aa4455" shape="circle" animationDuration={ANIMATION_DURATION_MS} />
+                <XAxis dataKey="seed" type="number" name="stature" />
+                <YAxis dataKey="stoppingTime" type="number" name="weight" />
+                <Scatter data={stoppingTimes} fill="#aa4455" shape="circle" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Tooltip content={<CustomScatterTooltip />} />
               </ScatterChart>
             </ResponsiveContainer>
           </div>
-          <div className='size-full'>
+
+          <div className='size-full flex flex-col space-y-2'>
+            <p className='text-gray-400'>Histogram of encountered numbers by leading digit</p>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart width={600} height={300} data={countByLeadingDigitData}>
-                <XAxis dataKey="leading">
-                  <Label value="Histogram of encountered numbers by leading digit" offset={200} position="top" />
-                </XAxis>
+                <XAxis dataKey="leading" />
                 <YAxis />
-                <Bar dataKey="count" fill="#aa4455" animationDuration={ANIMATION_DURATION_MS} />
+                <Bar dataKey="count" fill="#aa4455" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className='size-full flex flex-col space-y-2'>
+            <p className='text-gray-400'>Total stopping time by seed number (n<sub>i</sub>=1, n reaches 1)</p>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart
+                width={600}
+                height={300}
+              >
+                <XAxis dataKey="seed" type="number" name="stature" />
+                <YAxis dataKey="totalStoppingTime" type="number" name="weight" />
+                <Scatter data={totalStoppingTimes} fill="#aa4455" shape="circle" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Tooltip content={<CustomTotalScatterTooltip />} />
+              </ScatterChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -226,19 +305,3 @@ export default function App() {
     </div>
   )
 }
-
-const CustomTooltip = (payload: TooltipProps<number, number>) => {
-  if (payload?.payload?.[0]) {
-    const index = payload?.payload?.[0].payload.name;
-    const value = payload?.payload?.[0].value;
-    return (
-      <div className="text-sm border-2 rounded-md p-2 bg-slate-300 text-gray-950 flex flex-col place-items-end">
-        <p>x: {index}</p>
-        {/* <p className="italic">Previous: <strong>{getPrevious(value)}</strong></p> */}
-        <p className="font-bold" style={{ color: payload?.payload?.[0].stroke }}>y: {value}</p>
-        <p className="italic">next y: {value ? getNext(value) : '-'}</p>
-      </div>
-    );
-  }
-  return null;
-};

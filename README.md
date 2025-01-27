@@ -1,3 +1,3 @@
 # The Collatz conjecture
 
-A small size to show some infographics of the Collatz series of any given integer
+A small site to show some infographics of the Collatz series of any given integer

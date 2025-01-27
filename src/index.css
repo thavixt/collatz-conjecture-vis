@@ -70,3 +70,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+button {
+  @apply disabled:cursor-not-allowed disabled:opacity-30
+}
+
+.invertedText {
+  @apply border rounded-lg p-[1px] text-slate-700 bg-slate-100 font-bold
+}

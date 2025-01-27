@@ -1,13 +1,3 @@
-/**
- * Get a random integer - maximum is exclusive and the minimum is inclusive
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getRandomInt(min: number, max: number) {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
-}
-
 export const ANIMATION_DURATION_MS = 250;
 export const TIMER_DURATION_MS = ANIMATION_DURATION_MS * 2;
 export const ANIMATION_ACTIVE = false;

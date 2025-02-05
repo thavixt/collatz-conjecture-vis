@@ -123,7 +123,7 @@ export default function App() {
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col">
               <a target="_blank" href="https://www.youtube.com/watch?v=094y1Z2wpJg">Inspired by: The Simplest Math Problem No One Can Solve - Collatz Conjecture</a>
-              <p>Made by <a href="https://github.com/thavixt">thavixt@github</a></p>
+              <p>Made by <a href="https://github.com/thavixt/collatz-conjecture-vis">thavixt@github</a></p>
             </div>
             <p>The <strong>3n+1</strong> problem is a simple algorithm: start with any number for <strong>n</strong>:</p>
             <div className="flex flex-col items-start place-self-center">

@@ -76,5 +76,5 @@ button {
 }
 
 .invertedText {
-  @apply border rounded-lg p-[1px] text-slate-700 bg-slate-100 font-bold
+  @apply border rounded-md px-[2px] text-slate-700 bg-slate-100 font-bold
 }

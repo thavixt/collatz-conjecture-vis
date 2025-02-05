@@ -1,6 +1,6 @@
-export const ANIMATION_DURATION_MS = 250;
-export const TIMER_DURATION_MS = ANIMATION_DURATION_MS * 2;
-export const ANIMATION_ACTIVE = false;
+export const DEFAULT_ANIMATION_DURATION_MS = 150;
+export const DEFAULT_TIMER_DURATION_MS = DEFAULT_ANIMATION_DURATION_MS * 3;
+export const DEFAULT_ANIMATION_ACTIVE = true;
 
 export const DEFAULT_SEED = getStoredSeed();
 export const MAX_SEED = 9999999;
@@ -8,7 +8,7 @@ export const MAX_SEED = 9999999;
 export const DEFAULT_INCREMENT_VALUE = getStoredIncrementBy();
 export const MAX_INCREMENT_VALUE = 10000;
 
-export const DEFAULT_COUNT_MAP = new Map([
+export const DEFAULT_OCCURENCE_MAP = new Map([
   [1, 0],
   [2, 0],
   [3, 0],
@@ -48,7 +48,7 @@ export function setStoredIncrementBy(incrementBy: number) {
 export function getStoredAnimationActive(): boolean {
   const animationActive = localStorage.getItem('collatz_vis_animationActive');
   if (!animationActive) {
-    return true;
+    return DEFAULT_ANIMATION_ACTIVE;
   }
   return parseInt(animationActive) ? true : false;
 }

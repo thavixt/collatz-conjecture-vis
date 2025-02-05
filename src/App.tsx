@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { getCollatzSeries, getStoppingTimeOfSeries, getTotalStoppingTimeOfSeries } from './collatz';
 import './App.css'
-import { ANIMATION_DURATION_MS, DEFAULT_COUNT_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, TIMER_DURATION_MS } from './utils';
+import { DEFAULT_ANIMATION_DURATION_MS, DEFAULT_OCCURENCE_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, DEFAULT_TIMER_DURATION_MS, setStoredAnimationActive } from './utils';
 import { CustomTooltip, CustomScatterTooltip, CustomTotalScatterTooltip } from './Tooltips';
 
 export default function App() {
@@ -30,7 +30,7 @@ export default function App() {
 
   const [stoppingTimes, setStoppingTimes] = useState<{ seed: number, stoppingTime: number }[]>([]);
   const [totalStoppingTimes, setTotalStoppingTimes] = useState<{ seed: number, totalStoppingTime: number }[]>([]);
-  const [countByLeadingDigit, setCountByLeadingDigit] = useState(DEFAULT_COUNT_MAP);
+  const [countByLeadingDigit, setCountByLeadingDigit] = useState(DEFAULT_OCCURENCE_MAP);
 
   const [incrementBy, setIncrementBy] = useState(DEFAULT_INCREMENT_VALUE);
   const [timer, setTimer] = useState(0);
@@ -38,7 +38,7 @@ export default function App() {
   const automate = useCallback(() => {
     setTimer(setInterval(() => {
       setSeedNumber(n => n + incrementBy);
-    }, TIMER_DURATION_MS));
+    }, DEFAULT_TIMER_DURATION_MS));
   }, [incrementBy]);
   const stopAutomation = useCallback(() => {
     clearInterval(timer);
@@ -56,7 +56,7 @@ export default function App() {
     setEncounteredSeedNumbers(new Set());
     setStoppingTimes([]);
     setTotalStoppingTimes([]);
-    setCountByLeadingDigit(DEFAULT_COUNT_MAP);
+    setCountByLeadingDigit(DEFAULT_OCCURENCE_MAP);
     resetCurrent();
   }, [resetCurrent]);
 
@@ -164,7 +164,11 @@ export default function App() {
                 <button className='bg-gray-700' type="button" onClick={reset} disabled={!!timer}>Reset</button>
                 <div className='flex justify-center space-x-2'>
                   <label htmlFor="animate">Animate:</label>
-                  <input className='p-2' type="checkbox" id="animate" onChange={e => setAnimate(e.target.checked)} />
+                  <input className='p-2' type="checkbox" id="animate" onChange={e => {
+                    const checked = e.target.checked;
+                    setAnimate(checked);
+                    setStoredAnimationActive(checked);
+                  }} defaultChecked={animate} />
                 </div>
                 <span className='text-gray-500'>Tested {encounteredSeedNumbers.size} number(s)</span>
               </div>
@@ -205,7 +209,7 @@ export default function App() {
                 <XAxis dataKey="name" minTickGap={25} />
                 <YAxis minTickGap={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={DEFAULT_ANIMATION_DURATION_MS} isAnimationActive={animate} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -236,7 +240,7 @@ export default function App() {
                 <XAxis dataKey="name" minTickGap={25} />
                 <YAxis minTickGap={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Line dataKey="value" type="linear" stroke="#aa4455" dot={false} animationDuration={DEFAULT_ANIMATION_DURATION_MS} isAnimationActive={animate} />
                 <ReferenceLine
                   stroke="blue"
                   strokeDasharray="3 3"
@@ -256,7 +260,7 @@ export default function App() {
               >
                 <XAxis dataKey="seed" type="number" name="stature" />
                 <YAxis dataKey="stoppingTime" type="number" name="weight" />
-                <Scatter data={stoppingTimes} fill="#aa4455" shape="circle" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Scatter data={stoppingTimes} fill="#aa4455" shape="circle" animationDuration={DEFAULT_ANIMATION_DURATION_MS} isAnimationActive={animate} />
                 <Tooltip content={<CustomScatterTooltip />} />
               </ScatterChart>
             </ResponsiveContainer>
@@ -268,7 +272,7 @@ export default function App() {
               <BarChart width={600} height={300} data={countByLeadingDigitData}>
                 <XAxis dataKey="leading" />
                 <YAxis />
-                <Bar dataKey="count" fill="#aa4455" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Bar dataKey="count" fill="#aa4455" animationDuration={DEFAULT_ANIMATION_DURATION_MS} isAnimationActive={animate} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -282,7 +286,7 @@ export default function App() {
               >
                 <XAxis dataKey="seed" type="number" name="stature" />
                 <YAxis dataKey="totalStoppingTime" type="number" name="weight" />
-                <Scatter data={totalStoppingTimes} fill="#aa4455" shape="circle" animationDuration={ANIMATION_DURATION_MS} isAnimationActive={animate} />
+                <Scatter data={totalStoppingTimes} fill="#aa4455" shape="circle" animationDuration={DEFAULT_ANIMATION_DURATION_MS} isAnimationActive={animate} />
                 <Tooltip content={<CustomTotalScatterTooltip />} />
               </ScatterChart>
             </ResponsiveContainer>
@@ -290,13 +294,17 @@ export default function App() {
         </div>
 
         <details>
-          <summary>{series.length} elements</summary>
+          <summary>{series.length} elements in the Collatz series of {seedNumber}</summary>
           <code className="overflow-y-auto p-2">
             {'{ '}
             <span className="invertedText">{series[0].value}</span>
             {', '}
-            {series.slice(1, -1).map((item) => item.value).join(', ')}
-            {series.length > 2 && ', '}
+            {series.slice(1, -3).map((item) => item.value).join(', ')}
+            {series.length > 4 && ', '}
+            <span className="invertedText">{series.slice(-3)[0].value}</span>
+            {', '}
+            <span className="invertedText">{series.slice(-2)[0].value}</span>
+            {', '}
             <span className="invertedText">{series.slice(-1)[0].value}</span>
             {' }'}
           </code>

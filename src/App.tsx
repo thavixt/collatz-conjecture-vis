@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { getCollatzSeries, getStoppingTimeOfSeries, getTotalStoppingTimeOfSeries } from './collatz';
 import './App.css'
-import { DEFAULT_ANIMATION_DURATION_MS, DEFAULT_OCCURENCE_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, setStoredIncrementSpeed, DEFAULT_TIMER_DURATION_MS, setStoredAnimationActive, DEFAULT_INCREMENT_SPEED, MIN_INCREMENT_SPEED, MAX_INCREMENT_SPEED, MIN_INCREMENT_VALUE } from './utils';
+import { DEFAULT_ANIMATION_DURATION_MS, DEFAULT_OCCURENCE_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, setStoredIncrementSpeed, setStoredAnimationActive, DEFAULT_INCREMENT_SPEED, MIN_INCREMENT_SPEED, MAX_INCREMENT_SPEED, MIN_INCREMENT_VALUE } from './utils';
 import { CustomTooltip, CustomScatterTooltip, CustomTotalScatterTooltip } from './Tooltips';
 
 export default function App() {

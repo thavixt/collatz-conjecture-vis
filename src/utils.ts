@@ -1,5 +1,4 @@
 export const DEFAULT_ANIMATION_DURATION_MS = 150;
-export const DEFAULT_TIMER_DURATION_MS = DEFAULT_ANIMATION_DURATION_MS * 3;
 export const DEFAULT_ANIMATION_ACTIVE = true;
 
 export const DEFAULT_SEED = getStoredSeed();

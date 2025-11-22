@@ -19,7 +19,6 @@ export const CustomTooltip = (payload: TooltipProps<number, number>) => {
 
 export const CustomScatterTooltip = (payload: TooltipProps<number, number>) => {
   if (payload?.payload?.[0]) {
-    console.log(payload?.payload?.[0])
     const seed = payload?.payload?.[0].payload.seed;
     const stoppingTime = payload?.payload?.[0].payload.stoppingTime;
     return (

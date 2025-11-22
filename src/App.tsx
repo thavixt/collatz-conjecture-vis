@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import { getCollatzSeries, getStoppingTimeOfSeries, getTotalStoppingTimeOfSeries } from './collatz';
 import './App.css'
-import { DEFAULT_ANIMATION_DURATION_MS, DEFAULT_OCCURENCE_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, DEFAULT_TIMER_DURATION_MS, setStoredAnimationActive } from './utils';
+import { DEFAULT_ANIMATION_DURATION_MS, DEFAULT_OCCURENCE_MAP, DEFAULT_INCREMENT_VALUE, DEFAULT_SEED, getStoredAnimationActive, MAX_INCREMENT_VALUE, MAX_SEED, setStoredIncrementBy, setStoredSeed, setStoredIncrementSpeed, DEFAULT_TIMER_DURATION_MS, setStoredAnimationActive, DEFAULT_INCREMENT_SPEED, MIN_INCREMENT_SPEED, MAX_INCREMENT_SPEED, MIN_INCREMENT_VALUE } from './utils';
 import { CustomTooltip, CustomScatterTooltip, CustomTotalScatterTooltip } from './Tooltips';
 
 export default function App() {
@@ -33,23 +33,28 @@ export default function App() {
   const [countByLeadingDigit, setCountByLeadingDigit] = useState(DEFAULT_OCCURENCE_MAP);
 
   const [incrementBy, setIncrementBy] = useState(DEFAULT_INCREMENT_VALUE);
+  const [incrementSpeed, setIncrementSpeed] = useState(DEFAULT_INCREMENT_SPEED);
   const [timer, setTimer] = useState(0);
 
   const automate = useCallback(() => {
     setTimer(setInterval(() => {
       setSeedNumber(n => n + incrementBy);
-    }, DEFAULT_TIMER_DURATION_MS));
-  }, [incrementBy]);
+    }, incrementSpeed));
+  }, [incrementBy, incrementSpeed]);
   const stopAutomation = useCallback(() => {
     clearInterval(timer);
     setTimer(0);
   }, [timer]);
 
   const resetCurrent = useCallback(() => {
+    // reset live values
     setSeedNumber(1);
     setIncrementBy(1);
+    setIncrementSpeed(DEFAULT_INCREMENT_SPEED);
+    // reset stored values
     setStoredSeed(1);
     setStoredIncrementBy(1);
+    setStoredIncrementSpeed(DEFAULT_INCREMENT_SPEED);
   }, []);
 
   const reset = useCallback(() => {
@@ -82,7 +87,7 @@ export default function App() {
         { seed: seedNumber, stoppingTime: getStoppingTimeOfSeries(collatzSeries) }
       ]);
     }
-    
+
     if (totalStoppingTimes.findIndex(v => v.seed === seedNumber) === -1) {
       setTotalStoppingTimes(prev => [
         ...prev,
@@ -132,21 +137,21 @@ export default function App() {
               <li>repeat... <i>until reaching the 4-2-1 loop</i></li>
             </div>
             <p>All starting integer values up to <code>2<sup>68</sup> ≈ 2.95*10<sup>20</sup></code> have so far been proven to obey the <a target="_blank" href="https://en.wikipedia.org/wiki/Collatz_conjecture">Collatz conjecture</a>.</p>
-          </div>
-
-          <div className="flex flex-col place-self-center space-y-4">
             <div className="bg-slate-800 rounded-lg p-4">
               <blockquote cite="https://en.wikipedia.org/wiki/Collatz_conjecture">
                 <p>This process will eventually reach the number 1, regardless of which positive integer is chosen initially. That is, for each <code>n</code>, there is some <code>i</code> with <code>n<sub>i</sub> = 1</code>.</p>
               </blockquote>
               <p>— Lothar Collatz  <cite><a target="_blank" href="https://en.wikipedia.org/wiki/Lothar_Collatz">Wikipedia</a></cite></p>
             </div>
+          </div>
+
+          <div className="flex flex-col place-self-center space-y-4">
             <div className='flex flex-col space-y-2 items-center'>
-              <p>To create some infographics of the Collatz series, select a seed number:</p>
-              <div className="flex items-center space-x-2">
-                <label htmlFor="seed">Seed:</label>
+              <p className='mb-2'>To create some infographics of the Collatz series, select a seed number:</p>
+              <div className='grid grid-cols-2 gap-2 *:flex *:items-center *:justify-center'>
+                <label htmlFor="seed">Seed number:</label>
                 <input
-                  className="w-32 p-2 rounded-lg text-center"
+                  className="w-32 p-2 rounded-lg text-center h-6"
                   min={0}
                   max={999999999}
                   onChange={(e) => {
@@ -161,29 +166,16 @@ export default function App() {
                   value={seedNumber}
                   disabled={!!timer}
                 />
-                <button className='bg-gray-700' type="button" onClick={reset} disabled={!!timer}>Reset</button>
-                <div className='flex justify-center space-x-2'>
-                  <label htmlFor="animate">Animate:</label>
-                  <input className='p-2' type="checkbox" id="animate" onChange={e => {
-                    const checked = e.target.checked;
-                    setAnimate(checked);
-                    setStoredAnimationActive(checked);
-                  }} defaultChecked={animate} />
-                </div>
-                <span className='text-gray-500'>Tested {encounteredSeedNumbers.size} number(s)</span>
-              </div>
-              <div className='flex space-x-4 items-center justify-center'>
-                <button className='bg-green-700' type="button" onClick={automate} disabled={!!timer}>Auto inc.</button>
-                <button className='bg-red-700' type="button" onClick={stopAutomation} disabled={!timer}>Stop</button>
-                <label htmlFor="incrementBy">Increment by:</label>
+                <label htmlFor="incrementBy">Auto increment by:</label>
                 <input
                   id='incrementBy'
-                  className="w-24 p-2 rounded-lg text-center"
-                  min={1}
-                  max={10000}
+                  className="w-32 p-2 rounded-lg text-center h-6"
+                  min={MIN_INCREMENT_VALUE}
+                  max={MAX_INCREMENT_VALUE}
                   onChange={(e) => {
                     if (e.target.value) {
-                      const n = Math.min(parseInt(e.target.value), MAX_INCREMENT_VALUE);
+                      const v = parseInt(e.target.value);
+                      const n = Math.max(Math.min(v, MAX_INCREMENT_VALUE), MIN_INCREMENT_VALUE);
                       setIncrementBy(n);
                       setStoredIncrementBy(n);
                     }
@@ -192,6 +184,43 @@ export default function App() {
                   value={incrementBy}
                   disabled={!!timer}
                 />
+                <label htmlFor="incrementSpeed">Speed ({incrementSpeed} ms):</label>
+                <input
+                  type="range"
+                  className="w-32"
+                  id="incrementSpeed"
+                  min={MIN_INCREMENT_SPEED}
+                  max={MAX_INCREMENT_SPEED}
+                  step="50"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const v = parseInt(e.target.value);
+                      const n = Math.max(Math.min(v, MAX_INCREMENT_SPEED), MIN_INCREMENT_SPEED);
+                      setIncrementSpeed(n);
+                      setStoredIncrementSpeed(n);
+                    }
+                  }}
+                  value={incrementSpeed}
+                  disabled={!!timer}
+                />
+                <label htmlFor="animate">Animate:</label>
+                <input
+                  className='p-2'
+                  type="checkbox"
+                  id="animate"
+                  onChange={e => {
+                    const checked = e.target.checked;
+                    setAnimate(checked);
+                    setStoredAnimationActive(checked);
+                  }}
+                  checked={animate} />
+                <button className='bg-green-700' type="button" onClick={automate} disabled={!!timer}>Run</button>
+                <button className='bg-gray-700' type="button" onClick={reset} disabled={!!timer}>Reset</button>
+                <button className='bg-red-700' type="button" onClick={stopAutomation} disabled={!timer}>Stop</button>
+                <div>
+                  <span className='text-gray-500'>Tested <code>{encounteredSeedNumbers.size}</code> number(s)</span>
+                </div>
+
               </div>
             </div>
           </div>
@@ -294,20 +323,12 @@ export default function App() {
         </div>
 
         <details>
-          <summary>{series.length} elements in the Collatz series of {seedNumber}</summary>
-          <code className="overflow-y-auto p-2">
-            {'{ '}
-            <span className="invertedText">{series[0].value}</span>
-            {', '}
-            {series.slice(1, -3).map((item) => item.value).join(', ')}
-            {series.length > 4 && ', '}
-            <span className="invertedText">{series.slice(-3)[0].value}</span>
-            {', '}
-            <span className="invertedText">{series.slice(-2)[0].value}</span>
-            {', '}
-            <span className="invertedText">{series.slice(-1)[0].value}</span>
-            {' }'}
-          </code>
+          <summary><code>{series.length}</code> numbers in the Collatz series of {seedNumber}</summary>
+          <div className='mt-2 w-full max-w-[800px] h-48 m-auto border border-gray-600 rounded-md px-1 py-2 overflow-y-auto'>
+            <div className="grid grid-cols-12 gap-2">
+              {series.map((item) => item.value).map(v => <code key={v}>{v}</code>)}
+            </div>
+          </div>
         </details>
       </div>
     </div>

@@ -6,7 +6,12 @@ export const DEFAULT_SEED = getStoredSeed();
 export const MAX_SEED = 9999999;
 
 export const DEFAULT_INCREMENT_VALUE = getStoredIncrementBy();
-export const MAX_INCREMENT_VALUE = 10000;
+export const MIN_INCREMENT_VALUE = 1;
+export const MAX_INCREMENT_VALUE = 10e6;
+
+export const DEFAULT_INCREMENT_SPEED = getStoredIncrementSpeed();
+export const MIN_INCREMENT_SPEED = 100; // ms
+export const MAX_INCREMENT_SPEED = 1000;
 
 export const DEFAULT_OCCURENCE_MAP = new Map([
   [1, 0],
@@ -41,8 +46,20 @@ export function getStoredIncrementBy(): number {
   return parseInt(incrementBy);
 }
 
+export function getStoredIncrementSpeed(): number {
+  const incrementSpeed = localStorage.getItem('collatz_vis_incrementSpeed');
+  if (!incrementSpeed) {
+    return 1;
+  }
+  return parseInt(incrementSpeed);
+}
+
 export function setStoredIncrementBy(incrementBy: number) {
   localStorage.setItem('collatz_vis_incrementBy', incrementBy.toString());
+}
+
+export function setStoredIncrementSpeed(incrementSpeed: number) {
+  localStorage.setItem('collatz_vis_incrementSpeed', incrementSpeed.toString());
 }
 
 export function getStoredAnimationActive(): boolean {
